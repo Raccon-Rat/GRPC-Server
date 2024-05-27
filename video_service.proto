@@ -1,0 +1,21 @@
+// videoservice.proto
+
+syntax = "proto3";
+
+package videoservice;
+
+service VideoService {
+  rpc StreamVideo (Empty) returns (stream ImageData);
+  rpc GetOdometryData (Empty) returns (OdometryData);
+}
+
+message Empty {}
+
+message ImageData {
+  bytes data = 1;
+}
+
+message OdometryData {
+  double x = 1;
+  double y = 2;
+}

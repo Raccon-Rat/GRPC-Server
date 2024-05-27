@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Stream and Odometry Data</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            font-family: 'Georgia', serif;
+            margin-bottom: 20px;
+        }
+
+        button {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-family: 'Verdana', sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button img {
+            margin-right: 10px;
+            height: 20px;
+            width: 20px;
+        }
+
+        #static-mode-btn {
+            background: linear-gradient(45deg, #e2df11, #43c423);
+        }
+
+        #dynamic-mode-btn {
+            background: linear-gradient(45deg, #8ce025, #1f7cb3);
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        hr {
+            width: 80%;
+            border: 2px solid #333;
+            margin-top: 20px;
+        }
+
+        #video {
+            max-width: 80%;
+            height: auto;
+            max-height: 400px; /* Ajusta la altura máxima del video */
+        }
+
+        .odometry-data {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Video Stream and Odometry Data</h1>
+    <div>
+        <button id="static-mode-btn" onclick="setStaticMode()">
+            <img src="/static/stop.png" alt="Static Mode"> Static Mode
+        </button>
+        <button id="dynamic-mode-btn" onclick="setDynamicMode()">
+            <img src="/static/play.png" alt="Dynamic Mode"> Dynamic Mode
+        </button>
+    </div>
+    <hr>
+    <div>
+        <img id="video" src="{{ url_for('video_feed') }}" alt="Video Stream">
+    </div>
+    <hr>
+    <div class="odometry-data">
+        <p>Odometry Data:</p>
+        <p>X: <span id="odom_x"></span></p>
+        <p>Y: <span id="odom_y"></span></p>
+    </div>
+    <script>
+        let dynamicUpdateInterval;
+        let videoUpdateInterval;
+
+        function updateOdomData() {
+            fetch('/odom_data')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('odom_x').textContent = data.x.toFixed(2);
+                    document.getElementById('odom_y').textContent = data.y.toFixed(2);
+                });
+        }
+
+        function updateVideo() {
+            document.getElementById('video').src = "{{ url_for('video_feed') }}";
+        }
+
+        function startVideoUpdate() {
+            if (!videoUpdateInterval) {
+                videoUpdateInterval = setInterval(updateVideo, 1000); // Update video every 100ms
+                updateVideo(); // Update video immediately after setting interval
+            }
+        }
+
+        function stopVideoUpdate() {
+            if (videoUpdateInterval) {
+                clearInterval(videoUpdateInterval);
+                videoUpdateInterval = null;
+            }
+        }
+
+        function setStaticMode() {
+            clearInterval(dynamicUpdateInterval);
+            stopVideoUpdate();
+            updateOdomData(); // Update odometry data once immediately
+            document.getElementById('dynamic-mode-btn').innerHTML = '<img src="/static/play.png" alt="Dynamic Mode"> Dynamic Mode';
+        }
+
+        function setDynamicMode() {
+            clearInterval(dynamicUpdateInterval);
+            stopVideoUpdate();
+            updateOdomData(); // Update odometry data once immediately
+            dynamicUpdateInterval = setInterval(updateOdomData, 100); // Update odometry data every 100ms
+            startVideoUpdate(); // Start video update
+            document.getElementById('dynamic-mode-btn').innerHTML = '<img src="/static/play.png" alt="Dynamic Mode"> Dynamic Mode (Active)';
+        }
+
+        // Initially set dynamic mode
+        setDynamicMode();
+    </script>
+</body>
+</html>
